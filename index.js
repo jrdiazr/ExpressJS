@@ -1,34 +1,45 @@
 const express = require("express");
 const path = require("path");
-const app = express();
-const productsRouter = require("./routes/views/productsRoutes");
-const productApiRouter = require("./routes/api/products");
 const bodyParser = require("body-parser");
+const boom = require("boom");
+const debug = require("debug")("app:server");
+const productsRouter = require("./routes/views/productsRoutes");
+const productsApiRouter = require("./routes/api/products");
+const authApiRouter = require("./routes/api/auth");
+
 const {
 	logErrors,
-	errorHandler,
+	wrapErrors,
 	clientErrorHandler,
-	wrapErrors
+	errorHandler
 } = require("./utils/middlewares/errosHandlers");
-const isRequestAjaxOrApi = require("./utils/isRequestAjaxOrApi");
-const boom = require("boom");
 
+const isRequestAjaxOrApi = require("./utils/isRequestAjaxOrApi");
+
+// app
+const app = express();
+
+// middlewares
+app.use(bodyParser.json());
+
+// static files
 app.use("/static", express.static(path.join(__dirname, "public")));
 
-app.set("views", path.join(__dirname, "./views"));
+// view engine setup
+app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
 
-app.use(bodyParser.json());
+// routes
 app.use("/products", productsRouter);
-app.use("/api/products", productApiRouter);
+productsApiRouter(app);
+app.use("/api/auth", authApiRouter);
 
+// redirect
 app.get("/", function(req, res) {
 	res.redirect("/products");
 });
 
 app.use(function(req, res, next) {
-	console.log("entre");
-
 	if (isRequestAjaxOrApi(req)) {
 		const {
 			output: { statusCode, payload }
@@ -36,15 +47,17 @@ app.use(function(req, res, next) {
 
 		res.status(statusCode).json(payload);
 	}
+
 	res.status(404).render("404");
 });
 
+// error handlers
 app.use(logErrors);
 app.use(wrapErrors);
 app.use(clientErrorHandler);
 app.use(errorHandler);
-//error handlers
 
+// server
 const server = app.listen(8000, function() {
-	console.log(`Listening localhost port 8000`);
+	debug(`Listening http://localhost:${server.address().port}`);
 });

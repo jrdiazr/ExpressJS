@@ -9,7 +9,6 @@ class ProductService {
 
 	async getProducts({ tags }) {
 		const query = tags && { tags: { $in: tags } };
-		console.log(query);
 		const products = await this.mondoDB.getAll(this.collection, query);
 		return products || [];
 	}
@@ -19,8 +18,7 @@ class ProductService {
 		return product || {};
 	}
 
-	async createProduct({ product }) {		
-
+	async createProduct({ product }) {
 		const createdProductId = await this.mondoDB.create(
 			this.collection,
 			product

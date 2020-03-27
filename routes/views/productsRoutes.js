@@ -1,16 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const ProductServices = require("../../services/products");
-
+const { config } = require("../../config");
 const productService = new ProductServices();
 
 router.get("/", async function(req, res, next) {
 	const { tags } = req.query;
 	try {
 		const products = await productService.getProducts({ tags });
-		console.log("vista", products.data);
 
-		res.render("products", { products });
+		res.render("products", { products, dev: config.dev });
 	} catch (err) {
 		next(err);
 	}
